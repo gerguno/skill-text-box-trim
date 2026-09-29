@@ -83,6 +83,18 @@ If the control is already a flex or grid row, size the icon to the cap instead o
 }
 ```
 
+## Labels with no capital
+
+A label that never has a capital (a lowercase brand style, `text-transform: lowercase`) has nothing at the cap line. Trimmed to the cap, the x-height sits below the token by the difference between cap-height and x-height. Trim that component to the x-height:
+
+```css
+.label {
+  text-box: trim-both ex alphabetic;
+}
+```
+
+CSS cannot see whether a string has a capital. Put `ex` on the component whose labels are lowercase by design, never on `*`. Mixed, user-written, or unknown text keeps `cap`. Ascenders (b, d, f, h, k, l, t) paint into the top padding, the same way diacritics do.
+
 ## Font metrics
 
 Trim does not run on a real `input`, `textarea`, or `select`. The declaration can show up in computed style while the control keeps its own line box. Those controls stay at `text-box: none` so `g`, `y`, and `p` are not clipped.
@@ -121,7 +133,6 @@ No font file (a system face only): do not invent overrides and do not trim the c
 
 These were measured. Do not add a special case for them.
 
-- Lowercase labels still trim to the cap. The x-height sits lower than the token; v1 does not switch to `ex`.
 - Diacritics paint into the padding. `overflow: hidden` clips them only when that ink is taller than the padding on that side. At 16px Arial, `Ї` sticks about 2.3px above the cap: 4px padding holds, 0px clips. Give the padding room, or drop the clip. Do not turn trim off.
 - Ellipsis and `line-clamp` keep the same trim. Descenders paint into the padding and clip only when the padding is shorter than the descent and the box hides overflow.
 - `align-items: baseline` across sizes still shares one baseline.
@@ -133,6 +144,7 @@ These were measured. Do not add a special case for them.
 | --- | --- |
 | "The designer said padding: 12px, so the declaration is 12px." | 12px of padding on an untrimmed line box is not 12px to the cap. Arial at 16px measures about 14.5px above the cap and 16px below the baseline. |
 | "Flex centering puts the icon on the text." | A 1em icon in a centered flex row steals the block size. Padding stops matching the token. |
+| "The label is lowercase, so trim to `ex` everywhere." | Only on a component that is lowercase by design. CSS cannot tell whether a string has a capital; unknown text stays on `cap`. |
 | "Trim the input so the word sits in the middle." | The control does not take the trim. Descenders need the untrimmed box. Fix the font metrics. |
 | "ascent-override: 75% looks about right." | Percentages come from `normalize-metrics --css`, or they do not get written. |
 | "The CLI would have printed 98% / 25%, so I'll put that in." | A number you did not see in the command output is an invented number. No file, no run, no descriptors. |
