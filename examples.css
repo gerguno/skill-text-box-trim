@@ -4,7 +4,7 @@
   text-box: trim-both cap alphabetic;
 }
 
-:where(input, textarea, select) {
+:where(input, select) {
   text-box: none;
 }
 
@@ -69,7 +69,11 @@ button.flex-icon .icon {
 
 /* Input stays untrimmed. Metrics come from the CLI, not from guessed percentages.
    npx normalize-metrics ./fonts --css */
-input,
+input {
+  padding: 12px;
+}
+
+/* Textarea keeps the trim: 12px is the distance to the first cap. */
 textarea {
   padding: 12px;
 }
