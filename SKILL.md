@@ -12,7 +12,9 @@ description: >-
 
 Visual distance from cap-height and the alphabetic baseline to the box edge equals the spacing token. Font leading is not part of that distance.
 
-Scope is new CSS: a new project, a new component, or a global stylesheet written from scratch. Plain CSS. No `@supports` fallbacks.
+Scope is new CSS: a new project, a new component, or a global stylesheet written from scratch. Plain CSS. `text-box` is Baseline (Firefox 154), so no `@supports` fallbacks. A browser without it shows the untrimmed box, a few pixels more padding, and nothing breaks.
+
+Never add the `*` rule to a stylesheet that already ships. It moves every existing component at once. In an existing project, trim only the component you are writing or the one whose spacing you were asked to fix.
 
 If the request does not change spacing, type, or the font, and the control already shipped, leave its padding alone. A color or copy change is not a reason to add `text-box`.
 
@@ -32,9 +34,11 @@ On a new stylesheet, in this order:
 
 `:where` keeps the exception at zero specificity, so it only wins by coming second. `button` stays trimmed.
 
+Tailwind: put both rules in `@layer base`, in the same order. Do not add `[text-box:…]` utilities to each element.
+
 Then set `padding` and `gap` to the token. Do not use unequal padding, negative margins, or a `translateY` nudge to cancel leading.
 
-On a single new component, when the global rule is not yours to add, put the same `text-box: trim-both cap alphabetic` on the text elements. Still leave `input` and `select` at `text-box: none`.
+On a single component, when the global rule is not yours to add, put the same `text-box: trim-both cap alphabetic` on the text elements. Still leave `input` and `select` at `text-box: none`.
 
 Reference: [examples.css](examples.css). Measurements: https://skill-text-box-trim.olesgergun.com
 
@@ -74,14 +78,19 @@ The parent stays in inline flow (a plain `button` or `span`), so the icon sits o
 
 `align-items: center` on a flex or grid row with a `1em` icon does not do this. The icon becomes the block size, the cap floats inside it, and a 12px padding token measures about 14px. The same `translate` on that flex icon moves it the wrong way.
 
-If the control is already a flex or grid row, size the icon to the cap instead of translating it:
+If the control is already a flex or grid row, keep the icon at `1em` and shrink only its margin box to the cap:
 
 ```css
 .icon {
-  width: 1cap;
-  height: 1cap;
+  width: 1em;
+  height: 1em;
+  margin-block: calc((1cap - 1em) / 2);
 }
 ```
+
+The row's block size stays one cap, the icon centers on the cap, and it paints about 2px into the padding on each side, the same as the inline icon. Measured at 16px Arial: 12px padding measures 12px. This negative margin sizes the icon; it does not cancel leading, so the rule above does not forbid it.
+
+When a cap-sized icon is what the design wants, `width: 1cap; height: 1cap` also measures right. It is about 28% smaller than `1em` in Arial, so do not pick it just to make the numbers work.
 
 ## Labels with no capital
 
@@ -103,25 +112,24 @@ A `textarea` takes the trim: its text lays out like a block, the first cap lands
 
 Centering text in that untrimmed box is a font-metric problem. Do not guess `ascent-override` percentages.
 
-```
-trim is on (buttons, text, tiles, headings), and a font file is in the project
-  → compare the font's cap-height metric with the drawn H
-       (in the browser: an element with height: 1cap against canvas measureText("H").actualBoundingBoxAscent)
-  → they match within 0.5px: leave the font file alone
-  → they do not: OS/2 sCapHeight is wrong, and trim cuts at it.
-       CSS has no override for cap-height, so --css does not fix it.
-       npx normalize-metrics <file-or-folder>
-       (writes a copy with sCapHeight from H; ship the copy)
+Every project on this skill has both boxes: trimmed text, buttons, and headings, and untrimmed `input` and `select`. One font file serves both. A font file in the project gets two checks, in this order:
 
-trim is off, and a font file is in the project
-  → npx normalize-metrics <file-or-folder> --check
-  → already good: stop
-  → off, and a stylesheet ships with the font:
-       npx normalize-metrics <file-or-folder> --css
-  → off, and no stylesheet can travel with the font:
-       npx normalize-metrics <file-or-folder>
-       (writes a copy; does not overwrite)
-```
+1. **Where trim cuts.** Trim cuts at `OS/2.sCapHeight`. Compare it with the top of the drawn `H`. `--check` does not test this.
+   - In a browser, with the font loaded: an element with `height: 1cap` against canvas `measureText("H").actualBoundingBoxAscent`. They match within 0.5px.
+   - Without a browser, read the file (needs `fonttools`, plus `brotli` for WOFF2). It prints unitsPerEm, sCapHeight, and the top of H. They match within unitsPerEm / 32.
+     ```
+     python3 -c "import sys;from fontTools.ttLib import TTFont;from fontTools.pens.boundsPen import BoundsPen;f=TTFont(sys.argv[1]);g=f.getGlyphSet();p=BoundsPen(g);g[f.getBestCmap()[72]].draw(p);print(f['head'].unitsPerEm,f['OS/2'].sCapHeight,p.bounds[3])" <font-file>
+     ```
+2. **How the untrimmed box centers.** `npx normalize-metrics <file-or-folder> --check`.
+
+| Cap-height | `--check` | Do |
+| --- | --- | --- |
+| matches | good | Nothing. Leave the font file alone. |
+| matches | off | `npx normalize-metrics <file-or-folder> --css` when a stylesheet ships with the font. `npx normalize-metrics <file-or-folder>` (writes a copy) only when none can. |
+| wrong | off | `npx normalize-metrics <file-or-folder>`. The copy takes `sCapHeight` from H and centers the untrimmed box, so it fixes both. Ship the copy with no `--css` descriptors. |
+| wrong | good | The tool skips a face whose line metrics are already good and writes no copy. Do not patch `sCapHeight` yourself. Report both numbers and say the font needs a corrected `sCapHeight`. |
+
+CSS has no override for cap-height. The `--css` descriptors center an untrimmed box. They do not change where trim cuts.
 
 Until that command has written a CSS file, the `@font-face` you write has `font-family` and `src` only. After it has, copy `ascent-override`, `descent-override`, and `line-gap-override` from that file.
 
@@ -129,7 +137,7 @@ Until that command has written a CSS file, the `@font-face` you write has `font-
 
 The tool grades a face Bad when the cap-center offset is 40‰ or more. Install: `npm i -D normalize-metrics`. Repo: https://github.com/gerguno/normalize-metrics
 
-No font file (a system face only): do not invent overrides and do not trim the control.
+No font file (a system face only): do not invent overrides. `input` and `select` stay at `text-box: none`. Buttons, text, and headings still take the trim.
 
 ## Edges
 
@@ -139,17 +147,24 @@ These were measured. Do not add a special case for them.
 - Ellipsis and `line-clamp` keep the same trim. Descenders paint into the padding and clip only when the padding is shorter than the descent and the box hides overflow.
 - `align-items: baseline` across sizes still shares one baseline.
 - List padding is measured on the item text, the same way as a button.
+- Inline `code`, `mark`, and `kbd` with a background and padding keep their untrimmed box under the `*` rule (Chrome 152: 22px tall with trim and without). Leave them.
+
+Not measured: scripts other than Latin and Cyrillic. Devanagari hangs its headline and vowel signs above the cap, and CJK has no cap or alphabetic baseline to trim to. Keep `cap alphabetic` for Latin and Cyrillic. For other scripts, say that the trim has not been measured instead of picking edges.
 
 ## Rationalizations
 
 | Excuse | Reality |
 | --- | --- |
 | "The designer said padding: 12px, so the declaration is 12px." | 12px of padding on an untrimmed line box is not 12px to the cap. Arial at 16px measures about 14.5px above the cap and 16px below the baseline. |
-| "Flex centering puts the icon on the text." | A 1em icon in a centered flex row steals the block size. Padding stops matching the token. |
+| "Flex centering puts the icon on the text." | A 1em icon in a centered flex row steals the block size. Padding stops matching the token. Shrink its margin box to `1cap`. |
+| "Just make the icon `1cap`, the numbers work." | They do, and the icon is about 28% smaller. Keep the design's icon size and use `margin-block`. |
+| "It's an existing project, but `*` is the rule, so I'll add it." | The `*` rule is for a stylesheet written from scratch. On a shipped one it moves every component. Trim the component in scope. |
 | "The label is lowercase, so trim to `ex` everywhere." | Only on a component that is lowercase by design. CSS cannot tell whether a string has a capital; unknown text stays on `cap`. |
 | "Trim the input so the word sits in the middle." | The control does not take the trim. Descenders need the untrimmed box. Fix the font metrics. |
 | "ascent-override: 75% looks about right." | Percentages come from `normalize-metrics --css`, or they do not get written. |
 | "The CLI would have printed 98% / 25%, so I'll put that in." | A number you did not see in the command output is an invented number. No file, no run, no descriptors. |
 | "Trim is on, so the font file does not matter." | Trim cuts at `OS/2.sCapHeight`. Unica77 LL ships 726 of 2048 for an H that is 1487: trim puts the cap 6px outside a 12px token. Check `1cap` against the drawn H. |
-| "I'll rewrite the font with fontTools." | For the web, `--css` on the original file. Rewrite a copy only when CSS cannot ship with the font. |
+| "I'll rewrite the font with fontTools." | fontTools reads the file. It never writes it. The table under Font metrics says whether `--css` or a copy from `npx normalize-metrics` fixes it. |
+| "`--check` passed, so the font is fine." | `--check` grades the untrimmed box only. A wrong `sCapHeight` passes it. Compare `1cap` with the drawn H as well. |
+| "Older browsers ignore `text-box`, so I'll wrap it in `@supports`." | `text-box` is Baseline (Firefox 154). Write the declaration plain. |
 | "This shipped button's 9px/7px padding looks uneven; I'll clean it up while changing the color." | Shipped padding stays. The request did not change spacing. |

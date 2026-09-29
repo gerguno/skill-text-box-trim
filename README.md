@@ -40,11 +40,11 @@ For one project only, clone into `.claude/skills/text-box-trim` or `.cursor/skil
 }
 ```
 
-Then padding and gap equal the token. Icons sit on the cap-height, not in a flex-centered `1em` box. The rest is in [SKILL.md](SKILL.md) and [examples.css](examples.css).
+Then padding and gap equal the token. Icons sit on the cap-height, not in a flex-centered `1em` box. The `*` rule is for a new stylesheet only; in an existing project the skill trims the component in scope. The rest is in [SKILL.md](SKILL.md) and [examples.css](examples.css).
 
 ## Font metrics
 
-Inputs and selects stay untrimmed. Textareas trim. When a face sits off-center in that box, or its cap-height metric does not match the drawn `H`, the skill runs [normalize-metrics](https://github.com/gerguno/normalize-metrics) instead of guessing `ascent-override` percentages:
+Inputs and selects stay untrimmed. Textareas trim. The skill checks a font file twice: its cap-height metric against the drawn `H` (where trim cuts), and how it centers in the untrimmed box. It fixes either with [normalize-metrics](https://github.com/gerguno/normalize-metrics) instead of guessing `ascent-override` percentages:
 
 ```bash
 npx normalize-metrics ./fonts --check
