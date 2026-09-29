@@ -104,6 +104,42 @@ A label that never has a capital (a lowercase brand style, `text-transform: lowe
 
 CSS cannot see whether a string has a capital. Put `ex` on the component whose labels are lowercase by design, never on `*`. Mixed, user-written, or unknown text keeps `cap`. Ascenders (b, d, f, h, k, l, t) paint into the top padding, the same way diacritics do.
 
+## Truncated and clamped text
+
+A trimmed element ends at the cap and the baseline. `overflow: hidden` on that element clips there, so accents above the cap and descenders below the baseline are cut. The padding that should hold them belongs to the parent, outside the clip. Never write `overflow: hidden` on trimmed text.
+
+One line with an ellipsis clips the inline axis only:
+
+```css
+.truncate {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: clip;
+}
+```
+
+`overflow-y` stays `visible`, so descenders and accents paint into the parent's padding.
+
+Several lines with `-webkit-line-clamp`:
+
+```css
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  text-box: trim-start cap alphabetic;
+  height: calc-size(auto, round(down, size - 1cap, 1lh) + 1cap);
+  clip-path: inset(-1em -1em calc((1cap - 1lh) / 2) -1em);
+}
+```
+
+- `trim-start`, not `trim-both`. With `trim-both`, Chrome trims the last visible line and moves the hidden line after it up into the descender zone. No clip edge can then keep the descenders and hide that line.
+- The height rounds the untrimmed box down to whole lines and adds the cap back. The bottom edge lands on the last visible baseline whether the text is shorter than the clamp, fits it exactly, or is clamped. The formula does not depend on the clamp count.
+- `clip-path` cuts halfway between the last visible baseline and the next line's cap. Descenders and the ellipsis stay, and the hidden lines do not show. The negative insets on the other sides leave accents and side bearings alone.
+- Without `calc-size()` the height falls back to `auto`. The bottom then sits one descent below the token, and nothing is clipped.
+
+Measured in Chrome 152 with Arial and GT America, at `line-height` normal, 1.2, and 1.5: one line, two lines, and text clamped at 2 and 3 all end on the last visible baseline, 0.00px off. At `line-height: normal`, accented capitals on the hidden line stay hidden. Below about 1.15 the lines' own ink touches, and no clip separates them.
+
 ## Font metrics
 
 Trim does not run on a real `input` or `select`. The declaration can show up in computed style while the control keeps its own line box, and Chrome clips an input's text to the trimmed line. Those controls stay at `text-box: none` so `g`, `y`, and `p` are not clipped.
@@ -143,8 +179,8 @@ No font file (a system face only): do not invent overrides. `input` and `select`
 
 These were measured. Do not add a special case for them.
 
-- Diacritics paint into the padding. `overflow: hidden` clips them only when that ink is taller than the padding on that side. At 16px Arial, `Ї` sticks about 2.3px above the cap: 4px padding holds, 0px clips. Give the padding room, or drop the clip. Do not turn trim off.
-- Ellipsis and `line-clamp` keep the same trim. Descenders paint into the padding and clip only when the padding is shorter than the descent and the box hides overflow.
+- Diacritics paint into the padding. When the padded box itself hides overflow, it clips them only when that ink is taller than the padding on that side. At 16px Arial, `Ї` sticks about 2.3px above the cap: 4px padding holds, 0px clips. Give the padding room, or drop the clip. Do not turn trim off.
+- Truncation and line clamps: see Truncated and clamped text. The trimmed text never hides its own overflow.
 - `align-items: baseline` across sizes still shares one baseline.
 - List padding is measured on the item text, the same way as a button.
 - Inline `code`, `mark`, and `kbd` with a background and padding keep their untrimmed box under the `*` rule (Chrome 152: 22px tall with trim and without). Leave them.
@@ -159,6 +195,9 @@ Not measured: scripts other than Latin and Cyrillic. Devanagari hangs its headli
 | "Flex centering puts the icon on the text." | A 1em icon in a centered flex row steals the block size. Padding stops matching the token. Shrink its margin box to `1cap`. |
 | "Just make the icon `1cap`, the numbers work." | They do, and the icon is about 28% smaller. Keep the design's icon size and use `margin-block`. |
 | "It's an existing project, but `*` is the rule, so I'll add it." | The `*` rule is for a stylesheet written from scratch. On a shipped one it moves every component. Trim the component in scope. |
+| "`overflow: hidden` is how you truncate." | On trimmed text it cuts at the cap and the baseline. One line: `overflow-x: clip`. Several lines: the clamp block, with `clip-path` instead of overflow. |
+| "The clamp keeps `trim-both` like everything else." | Chrome moves the hidden line into the descender zone. The clamp trims the start only and takes its height from `calc-size()`. |
+| "Clip the clamp 0.3em lower and the descenders show." | The pulled-up hidden line shows too. A fixed offset is not a rule; the midpoint between baseline and next cap is. |
 | "The label is lowercase, so trim to `ex` everywhere." | Only on a component that is lowercase by design. CSS cannot tell whether a string has a capital; unknown text stays on `cap`. |
 | "Trim the input so the word sits in the middle." | The control does not take the trim. Descenders need the untrimmed box. Fix the font metrics. |
 | "ascent-override: 75% looks about right." | Percentages come from `normalize-metrics --css`, or they do not get written. |
