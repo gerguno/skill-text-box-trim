@@ -68,6 +68,24 @@ button.flex-icon .icon {
   margin: 0;
 }
 
+/* Truncated text: never overflow: hidden on trimmed text, it cuts at the cap and the baseline. */
+.truncate {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: clip;
+}
+
+/* Clamped text: trim the start only, round the height to the last baseline,
+   clip halfway to the next cap. */
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  text-box: trim-start cap alphabetic;
+  height: calc-size(auto, round(down, size - 1cap, 1lh) + 1cap);
+  clip-path: inset(-1em -1em calc((1cap - 1lh) / 2) -1em);
+}
+
 /* Input stays untrimmed. Metrics come from the CLI, not from guessed percentages.
    npx normalize-metrics ./fonts --css */
 input {
