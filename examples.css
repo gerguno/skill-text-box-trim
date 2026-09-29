@@ -30,7 +30,7 @@ button.with-icon .icon {
   translate: 0 calc((100% - 1cap) / 2);
 }
 
-/* Already a flex row: icon takes the cap, no translate. */
+/* Already a flex row: icon keeps 1em, its margin box shrinks to the cap. No translate. */
 button.flex-icon {
   display: inline-flex;
   align-items: center;
@@ -38,8 +38,9 @@ button.flex-icon {
 }
 
 button.flex-icon .icon {
-  width: 1cap;
-  height: 1cap;
+  width: 1em;
+  height: 1em;
+  margin-block: calc((1cap - 1em) / 2);
 }
 
 /* Card and tile. Gap is baseline → next cap. */
