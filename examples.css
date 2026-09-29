@@ -1,0 +1,75 @@
+/* New stylesheet. Exception after the universal rule. */
+
+* {
+  text-box: trim-both cap alphabetic;
+}
+
+:where(input, textarea, select) {
+  text-box: none;
+}
+
+button,
+.badge,
+.tab,
+.chip {
+  font: 16px/normal Arial, sans-serif;
+}
+
+button { padding: 12px; }
+.badge { padding: 4px; }
+.tab { padding: 8px; }
+.chip { padding: 6px; }
+
+/* Inline icon on the baseline. Do not flex-center a 1em box. */
+button.with-icon .icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: baseline;
+  margin-inline-end: 8px;
+  translate: 0 calc((100% - 1cap) / 2);
+}
+
+/* Already a flex row: icon takes the cap, no translate. */
+button.flex-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+button.flex-icon .icon {
+  width: 1cap;
+  height: 1cap;
+}
+
+/* Card and tile. Gap is baseline → next cap. */
+.card {
+  padding: 24px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.card p {
+  margin: 16px 0 0;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.tile p {
+  margin: 0;
+}
+
+/* Input stays untrimmed. Metrics come from the CLI, not from guessed percentages.
+   npx normalize-metrics ./fonts --css */
+input,
+textarea {
+  padding: 12px;
+}
