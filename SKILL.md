@@ -5,7 +5,7 @@ description: >-
   setting up global typography, or loading a web font. Also use when a
   button, badge, tab, chip, card, tile, or heading looks optically off
   because font leading adds space the spacing token did not include, or
-  when text in an input, textarea, or select sits off-center.
+  when text in an input or select sits off-center.
 ---
 
 # text-box trim
@@ -25,7 +25,7 @@ On a new stylesheet, in this order:
   text-box: trim-both cap alphabetic;
 }
 
-:where(input, textarea, select) {
+:where(input, select) {
   text-box: none;
 }
 ```
@@ -34,13 +34,13 @@ On a new stylesheet, in this order:
 
 Then set `padding` and `gap` to the token. Do not use unequal padding, negative margins, or a `translateY` nudge to cancel leading.
 
-On a single new component, when the global rule is not yours to add, put the same `text-box: trim-both cap alphabetic` on the text elements. Still leave `input`, `textarea`, and `select` at `text-box: none`.
+On a single new component, when the global rule is not yours to add, put the same `text-box: trim-both cap alphabetic` on the text elements. Still leave `input` and `select` at `text-box: none`.
 
 Reference: [examples.css](examples.css). Measurements: https://skill-text-box-trim.olesgergun.com
 
 ## Turning trim off
 
-The `:where` rule already turns trim off for `input`, `textarea`, and `select`. Anywhere else that must keep the font's own line box, the declaration is `text-box: none`.
+The `:where` rule already turns trim off for `input` and `select`. Anywhere else that must keep the font's own line box, the declaration is `text-box: none`.
 
 Plain CSS: write that declaration on the element. Do not create a Sass file just to hold it.
 
@@ -97,7 +97,9 @@ CSS cannot see whether a string has a capital. Put `ex` on the component whose l
 
 ## Font metrics
 
-Trim does not run on a real `input`, `textarea`, or `select`. The declaration can show up in computed style while the control keeps its own line box. Those controls stay at `text-box: none` so `g`, `y`, and `p` are not clipped.
+Trim does not run on a real `input` or `select`. The declaration can show up in computed style while the control keeps its own line box, and Chrome clips an input's text to the trimmed line. Those controls stay at `text-box: none` so `g`, `y`, and `p` are not clipped.
+
+A `textarea` takes the trim: its text lays out like a block, the first cap lands on the padding token, and the last line's descenders stay inside the bottom padding when it scrolls. Leave it trimmed.
 
 Centering text in that untrimmed box is a font-metric problem. Do not guess `ascent-override` percentages.
 
