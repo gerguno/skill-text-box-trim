@@ -17,16 +17,18 @@ npx skills add gerguno/skill-text-box-trim
 Claude Code:
 
 ```bash
-git clone https://github.com/gerguno/skill-text-box-trim ~/.claude/skills/text-box-trim
+npx skills add gerguno/skill-text-box-trim -g -a claude-code
 ```
 
 Cursor:
 
 ```bash
-git clone https://github.com/gerguno/skill-text-box-trim ~/.cursor/skills/text-box-trim
+npx skills add gerguno/skill-text-box-trim -g -a cursor
 ```
 
-For one project only, clone into `.claude/skills/text-box-trim` or `.cursor/skills/text-box-trim` inside the repo.
+For one project only, drop `-g`.
+
+The repo is also a Claude plugin. The skill lives in [skills/text-box-trim](skills/text-box-trim); to copy it by hand, copy that folder into `~/.claude/skills/` or `~/.cursor/skills/`.
 
 ## What it writes
 
@@ -40,7 +42,7 @@ For one project only, clone into `.claude/skills/text-box-trim` or `.cursor/skil
 }
 ```
 
-Then padding and gap equal the token. Icons sit on the cap-height, not in a flex-centered `1em` box. The `*` rule is for a new stylesheet only; in an existing project the skill trims the component in scope. The rest is in [SKILL.md](SKILL.md) and [examples.css](examples.css).
+Then padding and gap equal the token. Icons sit on the cap-height, not in a flex-centered `1em` box. The `*` rule is for a new stylesheet only; in an existing project the skill trims the component in scope. The rest is in [SKILL.md](skills/text-box-trim/SKILL.md) and [examples.css](skills/text-box-trim/examples.css).
 
 ## Font metrics
 
@@ -50,6 +52,10 @@ Inputs and selects stay untrimmed. Textareas trim. The skill checks a font file 
 npx normalize-metrics ./fonts --check
 npx normalize-metrics ./fonts --css
 ```
+
+## What it runs and sends
+
+The skill is instructions and a CSS reference. It runs nothing on its own and sends no data anywhere. When a project has font files, it asks the agent to run `npx normalize-metrics` and a read-only fontTools check on them, locally. normalize-metrics writes a corrected copy and leaves the original file alone unless `--in-place` is passed.
 
 ## License
 

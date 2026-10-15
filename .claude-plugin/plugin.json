@@ -1,0 +1,14 @@
+{
+  "name": "text-box-trim",
+  "displayName": "text-box trim",
+  "version": "1.0.0",
+  "description": "Padding and gap tokens measured from cap-height and the baseline, not the font's line box. Writes text-box: trim-both cap alphabetic on new CSS and checks font metrics for inputs and selects.",
+  "author": {
+    "name": "Oles Gergun",
+    "url": "https://olesgergun.com"
+  },
+  "homepage": "https://skill-text-box-trim.olesgergun.com",
+  "repository": "https://github.com/gerguno/skill-text-box-trim",
+  "license": "MIT",
+  "keywords": ["css", "typography", "text-box", "spacing", "fonts"]
+}
